@@ -66,6 +66,9 @@ def _grille() -> Gtk.FlowBox:
     flow.set_max_children_per_line(2)
     flow.set_min_children_per_line(1)
     flow.set_selection_mode(Gtk.SelectionMode.SINGLE)
+    # Vrai par défaut : sans cela, un simple clic validerait et fermerait la
+    # fenêtre. On veut sélectionner d'un clic, valider d'un double.
+    flow.set_activate_on_single_click(False)
     flow.set_margin_start(12)
     flow.set_margin_end(12)
     flow.set_margin_top(10)

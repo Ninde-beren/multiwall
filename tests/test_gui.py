@@ -341,6 +341,22 @@ class TestFenetresSecondaires(BaseGUI):
             "la bibliothèque doit être juste après « Choisir une image »",
         )
 
+    def test_un_simple_clic_ne_valide_pas(self):
+        """Sinon un clic mal placé applique un fond et ferme la fenêtre."""
+        from multiwall import windows
+
+        fenetre = windows.BibliothequeWindow(
+            self.win, self.win.monitors, lambda _: None, lambda *_: None,
+            cfg=self.win.cfg, cible=windows.Cible(self.win.monitors),
+        )
+        try:
+            for page in (fenetre.page_generes, fenetre.page_en_ligne,
+                         fenetre.page_mes_fonds):
+                with self.subTest(page=type(page).__name__):
+                    self.assertFalse(page.flow.get_activate_on_single_click())
+        finally:
+            fenetre.destroy()
+
     def test_le_double_clic_applique_le_fond_genere(self):
         from multiwall import windows
 

@@ -306,7 +306,7 @@ class MultiWallWindow(Gtk.ApplicationWindow):
         self.mode_buttons: dict[str, Gtk.RadioButton] = {}
         for value, label in (
             ("per-monitor", "_Une image par écran"),
-            ("span", "Image _panoramique unique"),
+            ("span", "Image _panoramique"),
         ):
             btn = Gtk.RadioButton.new_with_mnemonic_from_widget(first, label)
             first = first or btn
@@ -562,7 +562,7 @@ class MultiWallWindow(Gtk.ApplicationWindow):
         self.status.set_tooltip_text(path or None)
 
         self.area.get_accessible().set_name(
-            "Aperçu du bureau, image panoramique unique" if self.is_span
+            "Aperçu du bureau, image panoramique" if self.is_span
             else f"Aperçu du bureau, écran {self.selected} sélectionné, "
                  f"{os.path.basename(path) if path else 'aucune image'}"
         )
