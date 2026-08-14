@@ -10,6 +10,7 @@ Application de bureau GTK 3 pour Linux · Python, sans dépendance à installer
 
 [![Licence : PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/licence-PolyForm%20Noncommercial%201.0.0-0b7285)](LICENSE)
 [![Tests : 253](https://img.shields.io/badge/tests-253%20✓-2b8a3e)](tests/)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-offrir%20un%20café-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/sigilbo)
 
 </div>
 
@@ -269,6 +270,13 @@ accordée.
 
 Ce n'est pas une licence open source au sens de l'OSI : le code est public, modifiable
 et ouvert aux contributions, mais son exploitation commerciale reste réservée.
+
+## Soutenir le projet
+
+MultiWall est développé et maintenu sur mon temps libre, et reste gratuit pour tout
+usage non commercial. Si l'application vous est utile, vous pouvez m'offrir un café :
+
+**[ko-fi.com/sigilbo](https://ko-fi.com/sigilbo)**
 
 ## Contact
 
