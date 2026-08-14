@@ -502,6 +502,17 @@ class MultiWallWindow(Gtk.ApplicationWindow):
     def is_span(self) -> bool:
         return self.cfg.mode == "span"
 
+    @staticmethod
+    def _poser_image(conf: dict, chemin: str) -> None:
+        """Affecte une image à une cible, en écartant un éventuel fond généré.
+
+        `library` prime sur `path` à la composition : sans ce nettoyage, choisir
+        un fichier sur un écran qui porte déjà un fond généré resterait sans
+        effet visible.
+        """
+        conf["path"] = chemin
+        conf["library"] = ""
+
     def current_conf(self) -> dict:
         """Configuration de la cible courante (écran sélectionné, ou panorama).
 
@@ -908,8 +919,7 @@ class MultiWallWindow(Gtk.ApplicationWindow):
         for chemin in chemins:
             self.cfg.noter_image(chemin)
         if self.is_span:
-            self.cfg.span["path"] = chemins[0]
-            self.cfg.span["library"] = ""
+            self._poser_image(self.cfg.span, chemins[0])
         else:
             cible = self._monitor_at(x, y) or self.selected
             noms = [m.name for m in self.monitors]
@@ -918,10 +928,9 @@ class MultiWallWindow(Gtk.ApplicationWindow):
                 depart = noms.index(cible)
                 for i, chemin in enumerate(chemins):
                     if depart + i < len(noms):
-                        conf = self.cfg.monitors.setdefault(
+                        self._poser_image(self.cfg.monitors.setdefault(
                             noms[depart + i], {"path": "", "fit": "cover"}
-                        )
-                        conf["path"] = chemin
+                        ), chemin)
         self.refresh()
 
     def _on_mode_toggled(self, bouton, valeur: str) -> None:
@@ -1024,17 +1033,15 @@ class MultiWallWindow(Gtk.ApplicationWindow):
             fichiers = dialog.get_filenames()
             self.cfg.last_folder = dialog.get_current_folder() or ""
             if self.is_span:
-                self.cfg.span["path"] = fichiers[0]
-                self.cfg.span["library"] = ""
+                self._poser_image(self.cfg.span, fichiers[0])
             else:
                 noms = [m.name for m in self.monitors]
                 depart = noms.index(self.selected) if self.selected in noms else 0
                 for i, fichier in enumerate(fichiers):
                     if depart + i < len(noms):
-                        conf = self.cfg.monitors.setdefault(
+                        self._poser_image(self.cfg.monitors.setdefault(
                             noms[depart + i], {"path": "", "fit": "cover"}
-                        )
-                        conf["path"] = fichier
+                        ), fichier)
             for fichier in fichiers:
                 self.cfg.noter_image(fichier)
             self.refresh()
@@ -1070,16 +1077,17 @@ class MultiWallWindow(Gtk.ApplicationWindow):
             return
         if self.is_span:
             tiree = str(random.choice(images))
-            self.cfg.span["path"] = tiree
-            self.cfg.span["library"] = ""
+            self._poser_image(self.cfg.span, tiree)
             self.cfg.noter_image(tiree)
         else:
             pool = (random.sample(images, len(self.monitors))
                     if len(images) >= len(self.monitors)
                     else [random.choice(images) for _ in self.monitors])
             for mon, image in zip(self.monitors, pool):
-                conf = self.cfg.monitors.setdefault(mon.name, {"path": "", "fit": "cover"})
-                conf["path"] = str(image)
+                self._poser_image(
+                    self.cfg.monitors.setdefault(mon.name, {"path": "", "fit": "cover"}),
+                    str(image),
+                )
                 self.cfg.noter_image(image)
         self.refresh()
         self._toast("Nouveau tirage — Ctrl+R pour en relancer un")
@@ -1110,9 +1118,7 @@ class MultiWallWindow(Gtk.ApplicationWindow):
         if self.is_span:
             self.cfg.span = {"path": chemin, "fit": "cover", "library": ""}
         else:
-            conf = self.current_conf()
-            conf["path"] = chemin
-            conf["library"] = ""
+            self._poser_image(self.current_conf(), chemin)
         self.cfg.noter_image(chemin)
         self.refresh()
 
@@ -1139,9 +1145,7 @@ class MultiWallWindow(Gtk.ApplicationWindow):
         if self.is_span:
             self.cfg.span = {"path": chemin, "fit": "cover", "library": ""}
         else:
-            conf = self.current_conf()
-            conf["path"] = chemin
-            conf["library"] = ""
+            self._poser_image(self.current_conf(), chemin)
         self.refresh()
         self._toast(f"« {photo.nom[:36]} » — {photo.licence}")
 

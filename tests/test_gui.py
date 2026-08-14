@@ -341,6 +341,52 @@ class TestFenetresSecondaires(BaseGUI):
             "la bibliothèque doit être juste après « Choisir une image »",
         )
 
+    def test_une_image_remplace_un_fond_genere_sur_un_ecran(self):
+        """« library » prime sur « path » : sans nettoyage, le choix restait sans effet."""
+        self.win.selected = "DP-centre"
+        self.win._choisir_fond("canopee")
+        self.assertEqual(self.win.cfg.monitors["DP-centre"]["library"], "canopee")
+
+        image = self.image_test("remplacante.png", size=(1920, 1080), couleur=(255, 0, 0))
+        self.win._poser_image(self.win.current_conf(), str(image))
+        self.win.refresh()
+
+        conf = self.win.cfg.monitors["DP-centre"]
+        self.assertEqual(conf["path"], str(image))
+        self.assertEqual(conf["library"], "", "le fond généré doit être écarté")
+
+    def test_l_image_remplacante_est_bien_celle_qui_s_affiche(self):
+        """Vérification jusqu'au composite, pas seulement dans la configuration."""
+        from multiwall import core
+
+        self.win.selected = "DP-gauche"
+        self.win._choisir_fond("canopee")
+        image = self.image_test("rouge.png", size=(1920, 1080), couleur=(255, 0, 0))
+        self.win._poser_image(self.win.current_conf(), str(image))
+
+        composite = core.compose_per_monitor(self.win.monitors, self.win.cfg.monitors)
+        self.assertEqual(composite.getpixel((960, 540)), (255, 0, 0))
+
+    def test_le_glisser_deposer_remplace_aussi_un_fond_genere(self):
+        self.win.selected = "DP-droite"
+        self.win._choisir_fond("recif")
+        image = self.image_test("deposee.png", size=(1920, 1080))
+
+        classe = type("Donnees", (), {"get_uris": lambda self: [f"file://{image}"]})
+        self.win.on_drop(None, None, -1, -1, classe(), 0, 0)
+
+        conf = self.win.cfg.monitors["DP-droite"]
+        self.assertEqual(conf["path"], str(image))
+        self.assertEqual(conf["library"], "")
+
+    def test_le_tirage_aleatoire_remplace_aussi_un_fond_genere(self):
+        self.win._choisir_fond("dunes")
+        dossier = self.root / "fonds"
+        self.image_test("fonds/a.png", size=(1920, 1080))
+        self.win._tirer_au_sort(str(dossier))
+        for conf in self.win.cfg.monitors.values():
+            self.assertEqual(conf["library"], "")
+
     def test_un_simple_clic_ne_valide_pas(self):
         """Sinon un clic mal placé applique un fond et ferme la fenêtre."""
         from multiwall import windows

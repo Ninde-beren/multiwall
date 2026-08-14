@@ -9,7 +9,7 @@
 Application de bureau GTK 3 pour Linux · Python, sans dépendance à installer
 
 [![Licence : PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/licence-PolyForm%20Noncommercial%201.0.0-0b7285)](LICENSE)
-[![Tests : 253](https://img.shields.io/badge/tests-266%20✓-2b8a3e)](tests/)
+[![Tests : 253](https://img.shields.io/badge/tests-273%20✓-2b8a3e)](tests/)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-offrir%20un%20café-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/sigilbo)
 
 </div>
@@ -221,7 +221,7 @@ systemd-run --user --on-calendar=hourly multiwall random ~/Images/Fonds
 ## Tests
 
 ```bash
-./run-tests.sh          # 266 tests, ~17 s
+./run-tests.sh          # 273 tests, ~18 s
 ./run-tests.sh -v       # détail test par test
 ```
 
@@ -258,6 +258,10 @@ Données : `~/.config/multiwall/config.json` · composites et photos en cache da
   « remplir ».
 - La compensation des bordures d'écran (*bezel*) n'est pas implémentée : en panoramique,
   le sujet est coupé par les cadres physiques des moniteurs.
+
+## Journal des modifications
+
+Voir [CHANGELOG.md](CHANGELOG.md).
 
 ## Contribuer
 

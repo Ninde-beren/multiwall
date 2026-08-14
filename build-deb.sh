@@ -66,10 +66,8 @@ mkdir -p "$BUILD/usr/share/man/man1"
 cat > "$HERE/build/changelog" <<CHANGELOG
 multiwall ($VERSION) stable; urgency=low
 
-  * Première version publiée.
-  * Un fond d'écran par moniteur, ou une image panoramique étalée.
-  * Bibliothèque : fonds générés, photos Wikimedia Commons, historique.
-  * Détection à chaud des écrans, diagnostic d'environnement.
+  * Voir le journal des modifications :
+    https://github.com/Ninde-beren/multiwall/blob/main/CHANGELOG.md
 
  -- Sigilbo <Ninde-beren@users.noreply.github.com>  $DATE_DEB
 CHANGELOG
