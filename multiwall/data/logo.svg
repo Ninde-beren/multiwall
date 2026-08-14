@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <title>MultiWall</title>
+  <defs>
+    <!-- Ciel : une seule image continue, c'est tout le propos de l'app. -->
+    <linearGradient id="ciel" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#62a0ea"/>
+      <stop offset="0.5" stop-color="#9141ac"/>
+      <stop offset="1" stop-color="#613583"/>
+    </linearGradient>
+    <linearGradient id="soleil" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f9f06b"/>
+      <stop offset="1" stop-color="#ff7800"/>
+    </linearGradient>
+
+    <!-- Les trois panneaux découpent le paysage : le motif traverse les écrans. -->
+    <clipPath id="panneaux">
+      <rect x="4"   y="26" width="37" height="76" rx="6"/>
+      <rect x="45.5" y="26" width="37" height="76" rx="6"/>
+      <rect x="87"  y="26" width="37" height="76" rx="6"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#panneaux)">
+    <rect x="0" y="0" width="128" height="128" fill="url(#ciel)"/>
+    <!-- Soleil volontairement gros : c'est le seul repère qui survit à 16 px. -->
+    <circle cx="64" cy="55" r="16" fill="url(#soleil)"/>
+    <!-- Reliefs : deux masses simples, pas de détail qui disparaîtrait. -->
+    <path d="M -6 102 L 32 66 L 64 102 Z" fill="#1a5fb4"/>
+    <path d="M 50 102 L 94 62 L 134 102 Z" fill="#26a269"/>
+    <rect x="0" y="92" width="128" height="12" fill="#143d70"/>
+  </g>
+</svg>

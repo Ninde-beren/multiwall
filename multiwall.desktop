@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=MultiWall
+GenericName=Fond d'écran multi-moniteurs
+Comment=Un fond d'écran différent par moniteur, ou une image panoramique étalée sur tous les écrans
+Exec=multiwall gui
+Icon=org.sigilbo.MultiWall
+Terminal=false
+Categories=Settings;DesktopSettings;GTK;
+Keywords=fond;écran;wallpaper;moniteur;multi;panoramique;
+StartupNotify=true
+StartupWMClass=multiwall
+X-License=PolyForm-Noncommercial-1.0.0
