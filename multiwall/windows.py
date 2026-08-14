@@ -24,7 +24,7 @@ import os  # noqa: E402
 from gi.repository import Pango  # noqa: E402
 from PIL import Image, ImageOps  # noqa: E402
 
-from . import core, library, photos  # noqa: E402
+from . import core, doctor, library, photos  # noqa: E402
 
 VIGNETTE_L = 320
 
@@ -523,6 +523,170 @@ class BibliothequeWindow(Gtk.Window):
         return False
 
 
+class DiagnosticWindow(Gtk.Window):
+    """Vérification du système, en version graphique.
+
+    Le diagnostic interroge gsettings et xrandr : quelques centaines de
+    millisecondes qui gèleraient la fenêtre. Il tourne donc dans un thread,
+    derrière un indicateur d'activité.
+    """
+
+    ICONES = {
+        doctor.OK: "emblem-ok-symbolic",
+        doctor.ATTENTION: "dialog-warning-symbolic",
+        doctor.ECHEC: "dialog-error-symbolic",
+    }
+
+    def __init__(self, parent=None):
+        super().__init__(title="Vérification du système")
+        if parent is not None:
+            self.set_transient_for(parent)
+            self.set_modal(True)
+        self.set_default_size(620, 560)
+        self.rapport = None
+
+        entete = Gtk.HeaderBar(show_close_button=True, title="Vérification du système")
+        self.bouton_copier = Gtk.Button(label="Copier le rapport")
+        self.bouton_copier.set_tooltip_text(
+            "Copie le diagnostic, à joindre à un signalement de bogue"
+        )
+        self.bouton_copier.set_sensitive(False)
+        self.bouton_copier.connect("clicked", self._copier)
+        entete.pack_end(self.bouton_copier)
+        self.set_titlebar(entete)
+
+        self.stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
+        self.add(self.stack)
+
+        # --- Page « en cours » ---
+        attente = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        attente.set_valign(Gtk.Align.CENTER)
+        self.spinner = Gtk.Spinner()
+        self.spinner.set_size_request(32, 32)
+        attente.pack_start(self.spinner, False, False, 0)
+        message = Gtk.Label(label="Vérification en cours…")
+        attente.pack_start(message, False, False, 0)
+        self.stack.add_named(attente, "en-cours")
+
+        # --- Page « résultat » ---
+        self.resultat = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.verdict = Gtk.Label()
+        self.verdict.set_line_wrap(True)
+        self.verdict.set_margin_top(16)
+        self.verdict.set_margin_start(18)
+        self.verdict.set_margin_end(18)
+        self.resultat.pack_start(self.verdict, False, False, 0)
+
+        defilement = Gtk.ScrolledWindow()
+        defilement.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.liste = Gtk.ListBox()
+        self.liste.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.liste.set_margin_top(12)
+        self.liste.set_margin_start(18)
+        self.liste.set_margin_end(18)
+        self.liste.set_margin_bottom(18)
+        defilement.add(self.liste)
+        self.resultat.pack_start(defilement, True, True, 0)
+        self.stack.add_named(self.resultat, "resultat")
+
+        self.stack.show_all()
+        self.stack.set_visible_child_name("en-cours")
+        self.connect("key-press-event", self._touche)
+        self.lancer()
+
+    def lancer(self) -> None:
+        self.spinner.start()
+        self.stack.set_visible_child_name("en-cours")
+
+        def travail():
+            try:
+                rapport = doctor.analyser()
+            except Exception as exc:  # pragma: no cover - garde-fou
+                rapport = exc
+            GLib.idle_add(self._afficher, rapport)
+
+        threading.Thread(target=travail, daemon=True).start()
+
+    def _afficher(self, rapport) -> bool:
+        self.spinner.stop()
+        if isinstance(rapport, Exception):
+            self.verdict.set_markup(
+                f"<big><b>Le diagnostic a échoué</b></big>\n{GLib.markup_escape_text(str(rapport))}"
+            )
+            self.stack.set_visible_child_name("resultat")
+            return False
+
+        self.rapport = rapport
+        self.bouton_copier.set_sensitive(True)
+
+        if rapport.echecs:
+            titre = "MultiWall n'est pas compatible avec cet environnement"
+            detail = ("Les points marqués d'une croix empêchent l'application de "
+                      "poser un fond d'écran.")
+        elif rapport.avertissements:
+            titre = "Devrait fonctionner, avec des réserves"
+            detail = "Les points d'attention ci-dessous n'ont pas pu être garantis."
+        else:
+            titre = "Tout est en ordre"
+            detail = "Votre environnement est pleinement supporté."
+        self.verdict.set_markup(
+            f"<big><b>{GLib.markup_escape_text(titre)}</b></big>\n"
+            f"{GLib.markup_escape_text(detail)}"
+        )
+
+        for enfant in self.liste.get_children():
+            self.liste.remove(enfant)
+        for point in rapport.points:
+            self.liste.add(self._ligne(point))
+        self.liste.show_all()
+        self.stack.set_visible_child_name("resultat")
+        return False
+
+    def _ligne(self, point) -> Gtk.ListBoxRow:
+        ligne = Gtk.ListBoxRow()
+        ligne.set_activatable(False)
+        boite = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        boite.set_margin_top(6)
+        boite.set_margin_bottom(6)
+        boite.set_margin_start(6)
+        boite.set_margin_end(6)
+
+        icone = Gtk.Image.new_from_icon_name(self.ICONES[point.etat], Gtk.IconSize.BUTTON)
+        icone.set_valign(Gtk.Align.START)
+        boite.pack_start(icone, False, False, 0)
+
+        texte = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        libelle = Gtk.Label()
+        libelle.set_markup(
+            f"<b>{GLib.markup_escape_text(point.libelle.strip())}</b>  "
+            f"{GLib.markup_escape_text(point.valeur)}"
+        )
+        libelle.set_xalign(0.0)
+        libelle.set_line_wrap(True)
+        texte.pack_start(libelle, False, False, 0)
+        if point.detail:
+            detail = Gtk.Label(label=point.detail)
+            detail.get_style_context().add_class("dim-label")
+            detail.set_xalign(0.0)
+            detail.set_line_wrap(True)
+            texte.pack_start(detail, False, False, 0)
+        boite.pack_start(texte, True, True, 0)
+        ligne.add(boite)
+        return ligne
+
+    def _copier(self, _bouton) -> None:
+        if self.rapport is None:
+            return
+        presse_papiers = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        presse_papiers.set_text(doctor.formater(self.rapport), -1)
+
+    def _touche(self, _widget, event) -> bool:
+        if event.keyval == Gdk.KEY_Escape:
+            self.destroy()
+            return True
+        return False
+
+
 AIDE = """
 <big><b>MultiWall</b></big>
 
@@ -597,6 +761,8 @@ Options utiles : <tt>--fit</tt> (cover, contain, blur, stretch, center, tile), \
 
 • Le branchement d'un écran est détecté automatiquement ; <b>F5</b> force la \
 redétection.
+• <b>Ctrl+D</b> vérifie que votre environnement de bureau est compatible. Le \
+contrôle est aussi fait au démarrage, et ne s'affiche qu'en cas de problème.
 • La configuration est enregistrée à la fermeture, même sans avoir appliqué.
 • Le fond composé est écrit dans <tt>~/.local/share/multiwall/</tt> ; seuls les \
 deux derniers sont conservés.

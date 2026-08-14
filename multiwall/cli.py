@@ -189,6 +189,19 @@ def cmd_photos(args, monitors):
 
 
 def cmd_doctor(args, monitors):
+    if args.gui:
+        from .windows import DiagnosticWindow
+        import gi
+
+        gi.require_version("Gtk", "3.0")
+        from gi.repository import Gtk
+
+        fenetre = DiagnosticWindow()
+        fenetre.connect("destroy", Gtk.main_quit)
+        fenetre.show_all()
+        Gtk.main()
+        return 0
+
     rapport = doctor.analyser()
     print(doctor.formater(rapport))
 
@@ -272,6 +285,8 @@ def build_parser() -> argparse.ArgumentParser:
     dc = sub.add_parser("doctor", help="Vérifie que l'environnement est supporté")
     dc.add_argument("--mire", action="store_true",
                     help="Applique une mire de contrôle, puis restaure le fond")
+    dc.add_argument("--gui", action="store_true",
+                    help="Affiche le diagnostic dans une fenêtre")
 
     sub.add_parser("apply", help="Réapplique la dernière configuration (login, hotplug…)")
 

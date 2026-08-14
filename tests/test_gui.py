@@ -7,6 +7,7 @@ les tests exercent la logique des callbacks, pas le rendu. Ignorés proprement
 s'il n'y a pas de serveur graphique.
 """
 
+import os
 import time
 import unittest
 
@@ -383,6 +384,84 @@ class TestFenetresSecondaires(BaseGUI):
         # set_markup lève si le balisage Pango est invalide.
         fenetre = windows.AideWindow(self.win, self.win.monitors)
         fenetre.destroy()
+
+
+class TestDiagnosticGraphique(BaseGUI):
+    def _attendre_resultat(self, fenetre):
+        self.assertTrue(
+            self.attendre(lambda: fenetre.stack.get_visible_child_name() == "resultat"),
+            "le diagnostic doit aboutir",
+        )
+
+    def test_affiche_d_abord_la_verification_en_cours(self):
+        """Le diagnostic interroge gsettings : il ne doit pas geler la fenêtre."""
+        from multiwall import windows
+
+        fenetre = windows.DiagnosticWindow(self.win)
+        try:
+            self.assertEqual(fenetre.stack.get_visible_child_name(), "en-cours")
+            self._attendre_resultat(fenetre)
+        finally:
+            fenetre.destroy()
+
+    def test_verdict_favorable(self):
+        from multiwall import windows
+
+        os.environ["XDG_CURRENT_DESKTOP"] = "GNOME"
+        os.environ["XDG_SESSION_TYPE"] = "x11"
+        fenetre = windows.DiagnosticWindow(self.win)
+        try:
+            self._attendre_resultat(fenetre)
+            self.assertIn("en ordre", fenetre.verdict.get_text())
+            self.assertTrue(fenetre.bouton_copier.get_sensitive())
+            self.assertGreater(len(fenetre.liste.get_children()), 5)
+        finally:
+            fenetre.destroy()
+
+    def test_verdict_incompatible(self):
+        from multiwall import windows
+
+        os.environ["XDG_CURRENT_DESKTOP"] = "KDE"
+        fenetre = windows.DiagnosticWindow(self.win)
+        try:
+            self._attendre_resultat(fenetre)
+            self.assertIn("n'est pas compatible", fenetre.verdict.get_text())
+        finally:
+            fenetre.destroy()
+
+    def test_le_controle_au_demarrage_ne_derange_pas_si_tout_va_bien(self):
+        from multiwall import windows
+
+        os.environ["XDG_CURRENT_DESKTOP"] = "GNOME"
+        os.environ["XDG_SESSION_TYPE"] = "x11"
+        ouvertes = []
+        original = windows.DiagnosticWindow
+        windows.DiagnosticWindow = lambda *a, **k: ouvertes.append(a) or original(*a, **k)
+        try:
+            self.win._verifier_compatibilite()
+            self.assertEqual(ouvertes, [], "aucune fenêtre ne doit s'ouvrir")
+        finally:
+            windows.DiagnosticWindow = original
+
+    def test_le_controle_au_demarrage_alerte_si_incompatible(self):
+        from multiwall import windows
+
+        os.environ["XDG_CURRENT_DESKTOP"] = "XFCE"
+        ouvertes = []
+
+        class Espion(windows.DiagnosticWindow):
+            def __init__(self, *a, **k):
+                ouvertes.append(a)
+                super().__init__(*a, **k)
+
+        original = windows.DiagnosticWindow
+        windows.DiagnosticWindow = Espion
+        try:
+            self.win._verifier_compatibilite()
+            self.assertEqual(len(ouvertes), 1, "l'utilisateur doit être prévenu")
+        finally:
+            windows.DiagnosticWindow = original
+            self.pomper()
 
 
 class TestAPropos(BaseGUI):

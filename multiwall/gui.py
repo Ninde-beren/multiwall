@@ -209,6 +209,8 @@ class MultiWallWindow(Gtk.ApplicationWindow):
         self.connect("delete-event", self._on_close)
         self._brancher_detection_auto()
         self.refresh(initial=True)
+        # Après l'affichage de la fenêtre, pour ne pas retarder son ouverture.
+        GLib.timeout_add(400, self._verifier_compatibilite)
 
     # ------------------------------------------------------------ Actions --
     def _build_actions(self, app: Gtk.Application) -> None:
@@ -221,6 +223,7 @@ class MultiWallWindow(Gtk.ApplicationWindow):
             ("library", self.on_library, ["<Primary>l"]),
             ("photos", self.on_photos, ["<Primary>p"]),
             ("aide", self.on_aide, ["F1"]),
+            ("diagnostic", self.on_diagnostic, ["<Primary>d"]),
             ("export", self.on_export, ["<Primary>e"]),
             ("redetect", self.on_redetect, ["F5"]),
             ("reset", self.on_reset, []),
@@ -325,6 +328,7 @@ class MultiWallWindow(Gtk.ApplicationWindow):
 
         section = Gio.Menu()
         section.append("Guide d'utilisation", "win.aide")
+        section.append("Vérifier la compatibilité…", "win.diagnostic")
         section.append("Raccourcis clavier", "win.shortcuts")
         section.append("À propos de MultiWall", "win.about")
         menu.append_section(None, section)
@@ -1076,6 +1080,24 @@ class MultiWallWindow(Gtk.ApplicationWindow):
 
     def on_aide(self, _item) -> None:
         windows.AideWindow(self, self.monitors).show_all()
+
+    def on_diagnostic(self, _item) -> None:
+        windows.DiagnosticWindow(self).show_all()
+
+    def _verifier_compatibilite(self) -> bool:
+        """Au premier plan, ouvre le diagnostic si l'environnement est inutilisable.
+
+        Sans cela, l'utilisateur d'un bureau non supporté découvrirait le
+        problème en constatant que « Appliquer » ne fait rien.
+        """
+        from . import doctor
+
+        try:
+            if not doctor.analyser().utilisable:
+                windows.DiagnosticWindow(self).show_all()
+        except Exception:
+            pass  # le diagnostic ne doit jamais empêcher l'application de démarrer
+        return False
 
     def on_export(self, _item) -> None:
         dialog = Gtk.FileChooserDialog(

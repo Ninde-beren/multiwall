@@ -9,7 +9,7 @@
 Application de bureau GTK 3 pour Linux · Python, sans dépendance à installer
 
 [![Licence : PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/licence-PolyForm%20Noncommercial%201.0.0-0b7285)](LICENSE)
-[![Tests : 248](https://img.shields.io/badge/tests-248%20✓-2b8a3e)](tests/)
+[![Tests : 253](https://img.shields.io/badge/tests-253%20✓-2b8a3e)](tests/)
 
 </div>
 
@@ -93,8 +93,14 @@ En cas de doute, l'application se diagnostique elle-même :
 
 ```bash
 multiwall doctor          # vérifie l'environnement, ne modifie rien
+multiwall doctor --gui    # même chose, dans une fenêtre
 multiwall doctor --mire   # applique une mire de contrôle, puis restaure le fond
 ```
+
+L'application se contrôle aussi elle-même **au démarrage** : si l'environnement ne
+permet pas de poser un fond d'écran, une fenêtre l'explique au lieu de laisser croire à
+une panne. Le diagnostic est accessible à tout moment par `Ctrl+D`, avec un bouton
+« Copier le rapport » à joindre à un signalement.
 
 `doctor` renvoie `0` si l'environnement est supporté, `1` sinon — utilisable dans un
 script d'installation.
@@ -170,6 +176,7 @@ L'aperçu reproduit la disposition réelle de vos écrans.
 | `Ctrl+R` | Nouveau tirage aléatoire |
 | `Ctrl+E` | Exporter le composite |
 | `F1` | Guide d'utilisation |
+| `Ctrl+D` | Vérifier la compatibilité |
 | `F5` | Redétecter les écrans |
 
 ## Ligne de commande
@@ -201,7 +208,7 @@ systemd-run --user --on-calendar=hourly multiwall random ~/Images/Fonds
 ## Tests
 
 ```bash
-./run-tests.sh          # 248 tests, ~15 s
+./run-tests.sh          # 253 tests, ~16 s
 ./run-tests.sh -v       # détail test par test
 ```
 
