@@ -114,7 +114,17 @@ sudo dnf install python3-gobject gtk3 python3-pillow glib2 xrandr
 sudo pacman -S python-gobject gtk3 python-pillow glib2 xorg-xrandr
 ```
 
-Puis :
+### Paquet Debian / Ubuntu
+
+```bash
+sudo apt install ./multiwall_1.0.0_all.deb
+```
+
+Le `.deb` déclare ses dépendances, installe la page de manuel et l'icône, et se retire
+proprement avec `sudo apt remove multiwall`. Pour le construire depuis les sources :
+`./build-deb.sh` (nécessite `dpkg-deb` et `fakeroot`, présents par défaut).
+
+### Installation utilisateur, sans paquet
 
 ```bash
 git clone https://github.com/Ninde-beren/multiwall.git
@@ -123,7 +133,7 @@ cd multiwall
 ./install.sh --autostart    # + réapplication à l'ouverture de session
 ```
 
-L'installation ne touche qu'à votre dossier personnel (`~/.local/bin`,
+Cette variante ne touche qu'à votre dossier personnel (`~/.local/bin`,
 `~/.local/share/applications`, `~/.local/share/icons`). Aucun `sudo`, aucun paquet
 Python à installer.
 
