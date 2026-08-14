@@ -140,6 +140,55 @@ class TestConfigAvecFondGenere(BaseIntegration):
         self.assertFalse(cfg.has_image())
 
 
+class TestFondGenereParEcran(BaseIntegration):
+    """Un fond généré peut habiller un seul écran, pas seulement le bureau."""
+
+    def test_chaque_ecran_recoit_son_propre_fond(self):
+        out = core.compose_per_monitor(TROIS_ECRANS, {
+            "DP-gauche": {"library": "dunes"},
+            "DP-centre": {"library": "recif"},
+            "DP-droite": {"library": "braise"},
+        })
+        self.assertEqual(out.size, (5760, 1080))
+        couleurs = [out.getpixel((x, 540)) for x in (960, 2880, 4800)]
+        self.assertEqual(len(set(couleurs)), 3, "trois fonds distincts")
+
+    def test_le_fond_est_calcule_au_format_de_l_ecran(self):
+        """Et non découpé dans un fond du bureau entier."""
+        un_ecran = [core.Monitor("DP-1", 1920, 1080, 0, 0)]
+        seul = core.compose_per_monitor(un_ecran, {"DP-1": {"library": "massif"}})
+        direct = library.rendu("massif", (1920, 1080), un_ecran)
+        self.assertEqual(list(seul.getdata()), list(direct.getdata()))
+
+    def test_melange_fichier_et_fond_genere(self):
+        image = self.image_test("a.png", size=(1920, 1080), couleur=(255, 0, 0))
+        out = core.compose_per_monitor(TROIS_ECRANS, {
+            "DP-gauche": {"path": str(image), "fit": "cover"},
+            "DP-centre": {"library": "recif"},
+        })
+        self.assertEqual(out.getpixel((960, 540)), (255, 0, 0))
+        self.assertNotEqual(out.getpixel((2880, 540)), (0, 0, 0))
+
+    def test_un_ecran_avec_fond_genere_compte_comme_rempli(self):
+        cfg = core.Config()
+        cfg.monitors = {"DP-gauche": {"path": "", "library": "dunes"}}
+        self.assertTrue(cfg.has_image())
+        self.assertTrue(cfg.has_image(TROIS_ECRANS))
+
+    def test_la_recette_par_ecran_survit_a_la_sauvegarde(self):
+        cfg = core.Config()
+        cfg.monitors = {"DP-centre": {"path": "", "fit": "cover", "library": "cristaux"}}
+        cfg.save()
+        self.assertEqual(core.Config.load().monitors["DP-centre"]["library"], "cristaux")
+
+    def test_un_identifiant_disparu_est_nettoye(self):
+        core.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        core.CONFIG_PATH.write_text('{"monitors": {"DP-1": {"library": "fond-supprime"}}}')
+        cfg = core.Config.load()
+        self.assertEqual(cfg.monitors["DP-1"]["library"], "")
+        self.assertFalse(cfg.has_image())
+
+
 class TestHistorique(BaseIntegration):
     """« Mes fonds » : les images déjà apportées, retrouvables plus tard."""
 

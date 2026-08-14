@@ -516,7 +516,7 @@ class MultiWallWindow(Gtk.ApplicationWindow):
 
     def refresh(self, initial: bool = False) -> None:
         conf = self.current_conf()
-        a_une_image = bool(conf.get("path"))
+        a_une_image = bool(conf.get("path") or conf.get("library"))
 
         self.fit_combo.handler_block_by_func(self.on_fit_changed)
         self.fit_combo.set_active_id(conf.get("fit", "cover"))
@@ -546,7 +546,10 @@ class MultiWallWindow(Gtk.ApplicationWindow):
                         f"· résolution idéale {w}×{h}")
         else:
             self.choose_btn.set_label("Choisir une image…")
-            if a_une_image:
+            if conf.get("library"):
+                aide = (f"Fond généré « {library.get(conf['library']).nom} » · "
+                        f"Suppr effacer · ← → changer d'écran")
+            elif a_une_image:
                 aide = ("Double-cliquez pour remplacer · "
                         f"Suppr effacer · ← → changer d'écran")
             else:
@@ -962,7 +965,9 @@ class MultiWallWindow(Gtk.ApplicationWindow):
         self.refresh()
 
     def on_clear(self, _btn) -> None:
-        self.current_conf()["path"] = ""
+        conf = self.current_conf()
+        conf["path"] = ""
+        conf["library"] = ""
         self.refresh()
 
     # ------------------------------------------------------------ Fichiers --
@@ -1081,8 +1086,19 @@ class MultiWallWindow(Gtk.ApplicationWindow):
     def on_library(self, _item, onglet: str = "generes") -> None:
         windows.BibliothequeWindow(
             self, self.monitors, self._choisir_fond, self._photo_choisie, onglet,
-            cfg=self.cfg, on_fichier=self._fichier_choisi,
+            cfg=self.cfg, on_fichier=self._fichier_choisi, cible=self._cible(),
         ).show_all()
+
+    def _cible(self):
+        """Ce que la bibliothèque doit habiller : le bureau, ou un seul écran.
+
+        En mode « une image par écran », proposer des fonds au format du bureau
+        entier n'aurait pas de sens — et les appliquer forcerait le panoramique.
+        """
+        if self.is_span:
+            return windows.Cible(self.monitors)
+        ecran = next((m for m in self.monitors if m.name == self.selected), None)
+        return windows.Cible(self.monitors, ecran)
 
     def _fichier_choisi(self, chemin: str) -> None:
         """Applique une image de l'historique à la cible courante.
@@ -1095,22 +1111,37 @@ class MultiWallWindow(Gtk.ApplicationWindow):
         else:
             conf = self.current_conf()
             conf["path"] = chemin
+            conf["library"] = ""
         self.cfg.noter_image(chemin)
         self.refresh()
 
     def _choisir_fond(self, identifiant: str) -> None:
-        self.cfg.span = {"path": "", "fit": "cover", "library": identifiant}
-        self._appliquer_mode("span")
-        self._toast(f"« {library.get(identifiant).nom} » — cliquez sur Appliquer")
+        nom = library.get(identifiant).nom
+        if self.is_span:
+            self.cfg.span = {"path": "", "fit": "cover", "library": identifiant}
+            self.refresh()
+            self._toast(f"« {nom} » — cliquez sur Appliquer")
+            return
+        # Mode par écran : le fond va sur l'écran sélectionné, sans bascule.
+        conf = self.current_conf()
+        conf["library"] = identifiant
+        conf["path"] = ""
+        self.refresh()
+        self._toast(f"« {nom} » sur {self.selected} — cliquez sur Appliquer")
 
     def on_photos(self, _item) -> None:
         """Même fenêtre, ouverte directement sur l'onglet en ligne."""
         self.on_library(None, onglet="en-ligne")
 
     def _photo_choisie(self, chemin: str, photo) -> None:
-        self.cfg.span = {"path": chemin, "fit": "cover", "library": ""}
         self.cfg.noter_image(chemin)
-        self._appliquer_mode("span")
+        if self.is_span:
+            self.cfg.span = {"path": chemin, "fit": "cover", "library": ""}
+        else:
+            conf = self.current_conf()
+            conf["path"] = chemin
+            conf["library"] = ""
+        self.refresh()
         self._toast(f"« {photo.nom[:36]} » — {photo.licence}")
 
     def on_aide(self, _item) -> None:

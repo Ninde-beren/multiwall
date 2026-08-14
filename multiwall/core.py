@@ -291,7 +291,18 @@ def compose_per_monitor(
     canvas = Image.new("RGB", desktop_size(monitors), bg)
     for mon in monitors:
         conf = assignments.get(mon.name)
-        if not conf or not conf.get("path"):
+        if not conf:
+            continue
+
+        identifiant = conf.get("library")
+        if identifiant:
+            # Fond généré : calculé à la taille exacte de CET écran, avec son
+            # centre pour ancre — l'écran est ici le cadre, pas le bureau.
+            seul = Monitor(mon.name, mon.width, mon.height, 0, 0)
+            canvas.paste(library.rendu(identifiant, mon.size, [seul]), mon.origin)
+            continue
+
+        if not conf.get("path"):
             continue
         path = Path(conf["path"]).expanduser()
         if not path.is_file():
@@ -441,9 +452,12 @@ class Config:
                 if not isinstance(nom, str) or not isinstance(conf, dict):
                     continue
                 chemin = conf.get("path")
+                biblio_ecran = conf.get("library")
                 monitors[nom] = {
                     "path": chemin if isinstance(chemin, str) else "",
                     "fit": conf.get("fit") if conf.get("fit") in FIT_MODES else "cover",
+                    "library": biblio_ecran if isinstance(biblio_ecran, str)
+                    and library.existe(biblio_ecran) else "",
                 }
 
         # Historique : on ne garde que des entrées exploitables.
@@ -476,7 +490,8 @@ class Config:
                 "span": self.span,
                 # Les écrans simplement sélectionnés, sans image, ne méritent
                 # pas d'entrée : on ne garde que ce qui porte une affectation.
-                "monitors": {n: c for n, c in self.monitors.items() if c.get("path")},
+                "monitors": {n: c for n, c in self.monitors.items()
+                             if c.get("path") or c.get("library")},
                 "last_folder": self.last_folder,
                 "last_random_folder": self.last_random_folder,
                 "historique": self.historique,
@@ -523,10 +538,11 @@ class Config:
         """
         if self.mode == "span":
             return bool(self.span.get("path") or self.span.get("library"))
+        rempli = lambda c: bool(c.get("path") or c.get("library"))  # noqa: E731
         if monitors is None:
-            return any(c.get("path") for c in self.monitors.values())
+            return any(rempli(c) for c in self.monitors.values())
         presents = {m.name for m in monitors}
-        return any(c.get("path") for n, c in self.monitors.items() if n in presents)
+        return any(rempli(c) for n, c in self.monitors.items() if n in presents)
 
     def compose(self, monitors: list[Monitor], opener=None) -> Image.Image:
         if self.mode == "span":

@@ -29,6 +29,30 @@ from . import core, doctor, library, photos  # noqa: E402
 VIGNETTE_L = 320
 
 
+class Cible:
+    """Format visé par la bibliothèque.
+
+    En mode panoramique c'est le bureau entier ; en mode « une image par
+    écran » c'est l'écran sélectionné. Proposer des fonds 5760×1080 pour
+    habiller un seul moniteur 1920×1080 n'aurait aucun sens.
+    """
+
+    def __init__(self, ecrans, ecran=None):
+        self.ecran = ecran                      # None = bureau entier
+        if ecran is not None:
+            self.ecrans = [core.Monitor(ecran.name, ecran.width, ecran.height, 0, 0)]
+            self.largeur, self.hauteur = ecran.width, ecran.height
+            self.description = f"l'écran {ecran.name}"
+        else:
+            self.ecrans = ecrans
+            self.largeur, self.hauteur = core.desktop_size(ecrans)
+            self.description = "votre bureau"
+
+    @property
+    def ratio(self) -> float:
+        return self.largeur / self.hauteur if self.hauteur else 0.0
+
+
 def pil_to_pixbuf(img) -> GdkPixbuf.Pixbuf:
     data = GLib.Bytes.new(img.tobytes())
     return GdkPixbuf.Pixbuf.new_from_bytes(
@@ -56,17 +80,18 @@ class PageGeneres(Gtk.Box):
 
     titre_bouton = "Utiliser ce fond"
 
-    def __init__(self, monitors, on_change):
+    def __init__(self, monitors, on_change, cible):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
         self.monitors = monitors
         self.on_change = on_change
+        self.cible = cible          # format visé : un écran, ou le bureau entier
         self.selection: str | None = None
 
         aide = Gtk.Label()
         aide.set_markup(
-            "<small>Ces fonds ne sont pas des fichiers : ils sont recalculés à la "
-            "résolution exacte de votre bureau, et suivent donc un changement "
-            "d'écrans.</small>"
+            f"<small>Ces fonds ne sont pas des fichiers : ils sont calculés à la "
+            f"résolution exacte de {GLib.markup_escape_text(cible.description)} "
+            f"({cible.largeur}×{cible.hauteur}).</small>"
         )
         aide.get_style_context().add_class("dim-label")
         aide.set_line_wrap(True)
@@ -85,9 +110,11 @@ class PageGeneres(Gtk.Box):
         self._remplir()
 
     def _remplir(self) -> None:
-        largeur, hauteur = core.desktop_size(self.monitors)
+        # La vignette adopte le format de la cible : un aperçu 16:3 serait
+        # trompeur quand le fond ira sur un seul écran 16:9.
+        largeur, hauteur = self.cible.largeur, self.cible.hauteur
         hauteur_vignette = max(round(VIGNETTE_L * hauteur / largeur), 24) if largeur else 60
-        ancres = library.ancres_ecrans(self.monitors, VIGNETTE_L)
+        ancres = library.ancres_ecrans(self.cible.ecrans, VIGNETTE_L)
         for fond in library.CATALOGUE:
             boite = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
             image = fond.rendu((VIGNETTE_L, hauteur_vignette), ancres)
@@ -119,10 +146,11 @@ class PageEnLigne(Gtk.Box):
     #: Chaque vignette est une requête : en demander trop épuise le quota.
     MAX_RESULTATS = 6
 
-    def __init__(self, monitors, on_change):
+    def __init__(self, monitors, on_change, cible):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
         self.monitors = monitors
         self.on_change = on_change
+        self.cible = cible
         self.resultats: list = []
         self.selection = None
         self.en_cours = False
@@ -212,8 +240,7 @@ class PageEnLigne(Gtk.Box):
         self.etat.set_text(f"Recherche de « {libelle or terme} »…")
         self.on_change()
 
-        largeur, hauteur = core.desktop_size(self.monitors)
-        ratio = largeur / hauteur if hauteur else 0
+        ratio = self.cible.ratio
 
         def travail():
             try:
@@ -417,7 +444,7 @@ class BibliothequeWindow(Gtk.Window):
     """Les deux sources de fonds panoramiques, réunies en deux onglets."""
 
     def __init__(self, parent, monitors, on_fond_genere, on_photo, onglet: str = "generes",
-                 cfg=None, on_fichier=None):
+                 cfg=None, on_fichier=None, cible=None):
         super().__init__(title="Bibliothèque")
         self.set_transient_for(parent)
         self.set_modal(True)
@@ -426,11 +453,12 @@ class BibliothequeWindow(Gtk.Window):
         self.on_fond_genere = on_fond_genere
         self.on_photo = on_photo
         self.on_fichier = on_fichier
+        self.cible = cible or Cible(monitors)
         self._telechargement = False
 
         self.stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
-        self.page_generes = PageGeneres(monitors, self._etat_change)
-        self.page_en_ligne = PageEnLigne(monitors, self._etat_change)
+        self.page_generes = PageGeneres(monitors, self._etat_change, self.cible)
+        self.page_en_ligne = PageEnLigne(monitors, self._etat_change, self.cible)
         self.stack.add_titled(self.page_generes, "generes", "Fonds générés")
         self.stack.add_titled(self.page_en_ligne, "en-ligne", "Photos en ligne")
         self.page_mes_fonds = None
@@ -440,6 +468,10 @@ class BibliothequeWindow(Gtk.Window):
         self.stack.connect("notify::visible-child", lambda *_: self._etat_change())
 
         entete = Gtk.HeaderBar(show_close_button=True)
+        self.set_title(
+            "Bibliothèque" if self.cible.ecran is None
+            else f"Bibliothèque — {self.cible.ecran.name}"
+        )
         selecteur = Gtk.StackSwitcher()
         selecteur.set_stack(self.stack)
         entete.set_custom_title(selecteur)
@@ -493,7 +525,7 @@ class BibliothequeWindow(Gtk.Window):
         self.spinner.start()
         self.bouton_utiliser.set_sensitive(False)
         self.page_en_ligne.etat.set_text(f"Téléchargement de « {photo.nom[:40]} »…")
-        largeur = core.desktop_size(self.monitors)[0]
+        largeur = self.cible.largeur
 
         def travail():
             try:
@@ -716,6 +748,10 @@ l'image · <b>Entier (fond flouté)</b> comble avec l'image floutée · <b>Étir
 déforme · <b>Taille réelle</b> centre sans redimensionner · <b>Mosaïque</b> répète.
 
 <b>Bibliothèque</b>
+
+Elle propose des fonds <b>au format de ce que vous habillez</b> : la résolution \
+du bureau entier en mode panoramique, celle de l'écran sélectionné en mode \
+« une image par écran » — et l'appliquer ne change jamais de mode.
 
 Un seul bouton, trois onglets :
 

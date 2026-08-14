@@ -9,7 +9,7 @@
 Application de bureau GTK 3 pour Linux · Python, sans dépendance à installer
 
 [![Licence : PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/licence-PolyForm%20Noncommercial%201.0.0-0b7285)](LICENSE)
-[![Tests : 253](https://img.shields.io/badge/tests-253%20✓-2b8a3e)](tests/)
+[![Tests : 253](https://img.shields.io/badge/tests-263%20✓-2b8a3e)](tests/)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-offrir%20un%20café-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/sigilbo)
 
 </div>
@@ -210,7 +210,7 @@ systemd-run --user --on-calendar=hourly multiwall random ~/Images/Fonds
 ## Tests
 
 ```bash
-./run-tests.sh          # 253 tests, ~16 s
+./run-tests.sh          # 263 tests, ~16 s
 ./run-tests.sh -v       # détail test par test
 ```
 

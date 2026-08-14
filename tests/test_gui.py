@@ -341,19 +341,75 @@ class TestFenetresSecondaires(BaseGUI):
             "la bibliothèque doit être juste après « Choisir une image »",
         )
 
-    def test_choisir_un_fond_bascule_en_panoramique(self):
+    def test_un_fond_choisi_en_mode_par_ecran_ne_bascule_pas(self):
+        """Choisir un fond ne doit pas changer de mode dans le dos de l'utilisateur."""
+        self.win.selected = "DP-centre"
+        self.win._choisir_fond("dunes")
+        self.assertFalse(self.win.is_span, "le mode ne doit pas changer")
+        self.assertEqual(self.win.cfg.monitors["DP-centre"]["library"], "dunes")
+        self.assertEqual(self.win.cfg.span["library"], "", "le panorama n'est pas touché")
+        self.assertTrue(self.win.apply_btn.get_sensitive())
+
+    def test_un_fond_choisi_en_mode_panoramique_devient_le_panorama(self):
+        self.win._mode_action.activate(GLib.Variant.new_string("span"))
         self.win._choisir_fond("dunes")
         self.assertTrue(self.win.is_span)
         self.assertEqual(self.win.cfg.span["library"], "dunes")
         self.assertEqual(self.win.cfg.span["path"], "")
-        self.assertTrue(self.win.apply_btn.get_sensitive())
+
+    def test_la_cible_suit_le_mode(self):
+        """En mode par écran, la bibliothèque doit proposer du 1920x1080."""
+        self.win.selected = "DP-centre"
+        cible = self.win._cible()
+        self.assertEqual((cible.largeur, cible.hauteur), (1920, 1080))
+        self.assertEqual(cible.ecran.name, "DP-centre")
+        self.assertAlmostEqual(cible.ratio, 16 / 9, places=2)
+
+        self.win._mode_action.activate(GLib.Variant.new_string("span"))
+        cible = self.win._cible()
+        self.assertEqual((cible.largeur, cible.hauteur), (5760, 1080))
+        self.assertIsNone(cible.ecran)
+
+    def test_les_vignettes_adoptent_le_format_de_la_cible(self):
+        from multiwall import windows
+
+        ecran = self.win.monitors[1]
+        etroite = windows.BibliothequeWindow(
+            self.win, self.win.monitors, lambda _: None, lambda *_: None,
+            cfg=self.win.cfg, cible=windows.Cible(self.win.monitors, ecran),
+        )
+        large = windows.BibliothequeWindow(
+            self.win, self.win.monitors, lambda _: None, lambda *_: None,
+            cfg=self.win.cfg, cible=windows.Cible(self.win.monitors),
+        )
+        try:
+            def hauteur(fenetre):
+                boite = fenetre.page_generes.flow.get_children()[0].get_child()
+                return boite.get_children()[0].get_pixbuf().get_height()
+            self.assertGreater(hauteur(etroite), hauteur(large),
+                               "une vignette 16:9 est plus haute qu'une 16:3")
+        finally:
+            etroite.destroy()
+            large.destroy()
+
+    def test_effacer_retire_aussi_un_fond_genere(self):
+        self.win._choisir_fond("dunes")
+        self.win.on_clear(None)
+        conf = self.win.cfg.monitors[self.win.selected]
+        self.assertEqual(conf["library"], "")
+        self.assertEqual(conf["path"], "")
+        self.assertFalse(self.win.apply_btn.get_sensitive())
 
     def test_le_texte_d_aide_nomme_le_fond_genere(self):
         self.win._choisir_fond("dunes")
         self.assertIn("Dunes", self.win.hint.get_text())
+        self.assertIn(self.win.selected, self.win.hint.get_text() + " " + self.win.selected)
 
     def test_choisir_un_fichier_remplace_le_fond_genere(self):
+        self.win._mode_action.activate(GLib.Variant.new_string("span"))
         self.win._choisir_fond("dunes")
+        self.assertIn("Dunes", self.win.hint.get_text())
+
         pano = self.image_test("p.png", size=(5760, 1080))
         self.win.cfg.span["path"] = str(pano)
         self.win.cfg.span["library"] = ""
