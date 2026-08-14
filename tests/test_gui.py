@@ -793,6 +793,37 @@ class TestModes(BaseGUI):
 
 
 
+    def test_pas_de_zone_vide_avec_un_fond_genere_panoramique(self):
+        """Le voile et les pointillés assombrissaient un fond pourtant présent."""
+        import cairo
+
+        self.win._mode_action.activate(GLib.Variant.new_string("span"))
+        self.win._choisir_fond("massif")
+        appels = []
+        self.win._dessiner_etat_vide = lambda *a, **k: appels.append(a)
+
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 900, 169)
+        alloc = Gdk.Rectangle()
+        alloc.x, alloc.y, alloc.width, alloc.height = 0, 0, 900, 169
+        self.win.area.size_allocate(alloc)
+        self.win.on_draw(self.win.area, cairo.Context(surface))
+        self.assertEqual(appels, [])
+
+    def test_pas_de_zone_vide_sur_un_ecran_a_fond_genere(self):
+        import cairo
+
+        self.win.selected = "DP-centre"
+        self.win._choisir_fond("canopee")
+        appels = []
+        self.win._dessiner_etat_vide = lambda *a, **k: appels.append(a)
+
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 900, 169)
+        alloc = Gdk.Rectangle()
+        alloc.x, alloc.y, alloc.width, alloc.height = 0, 0, 900, 169
+        self.win.area.size_allocate(alloc)
+        self.win.on_draw(self.win.area, cairo.Context(surface))
+        self.assertEqual(len(appels), 2, "seuls les deux autres écrans sont vides")
+
     def test_pas_de_zone_vide_quand_une_image_panoramique_est_choisie(self):
         import cairo
 

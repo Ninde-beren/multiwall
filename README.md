@@ -14,6 +14,10 @@ Application de bureau GTK 3 pour Linux · Python, sans dépendance à installer
 
 </div>
 
+<img src="docs/images/mode-par-ecran.png" alt="Mode « une image par écran » : trois fonds distincts" width="100%">
+
+<img src="docs/images/mode-panoramique.png" alt="Mode panoramique : une image étalée sur les trois écrans" width="100%">
+
 ---
 
 ## Le problème
@@ -31,6 +35,13 @@ pour pixel sur l'ensemble.
 
 Un fond différent par écran revient alors à coller chaque image à la bonne position
 dans ce grand canevas, d'après la géométrie réelle renvoyée par `xrandr`.
+
+### Les deux modes
+
+| | |
+|---|---|
+| ![Une image par écran](docs/images/mode-par-ecran.png) | **Une image par écran** — chaque moniteur reçoit son propre fond, avec son propre mode d'ajustement. |
+| ![Image panoramique](docs/images/mode-panoramique.png) | **Image panoramique** — une seule image couvre l'ensemble, répartie pixel pour pixel. |
 
 ## Fonctionnalités
 

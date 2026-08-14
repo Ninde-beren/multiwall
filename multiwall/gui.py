@@ -722,7 +722,8 @@ class MultiWallWindow(Gtk.ApplicationWindow):
             sc, "theme_selected_bg_color", "accent_bg_color", defaut=(0.30, 0.62, 1.0, 1.0)
         )
 
-        if self.is_span and not self.cfg.span.get("path"):
+        if self.is_span and not (self.cfg.span.get("path")
+                                 or self.cfg.span.get("library")):
             dw, dh = core.desktop_size(self.monitors)
             self._dessiner_etat_vide(cr, sc, ox, oy, dw * scale, dh * scale)
 
@@ -733,7 +734,7 @@ class MultiWallWindow(Gtk.ApplicationWindow):
             h = mon.height * scale
 
             conf = self.cfg.monitors.get(mon.name, {})
-            vide = not self.is_span and not conf.get("path")
+            vide = not self.is_span and not (conf.get("path") or conf.get("library"))
 
             if vide:
                 self._dessiner_etat_vide(cr, sc, x, y, w, h)
