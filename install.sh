@@ -55,3 +55,4 @@ case ":$PATH:" in
 esac
 
 echo "Terminé. Lancez : multiwall"
+echo "Pour désinstaller : $HERE/uninstall.sh"

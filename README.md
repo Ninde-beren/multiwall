@@ -142,6 +142,12 @@ Le `.deb` déclare ses dépendances, installe la page de manuel et l'icône, et 
 proprement avec `sudo apt remove multiwall`. Pour le construire depuis les sources :
 `./build-deb.sh` (nécessite `dpkg-deb` et `fakeroot`, présents par défaut).
 
+> Si le paquet se trouve dans votre dossier personnel, `apt` affiche en fin
+> d'installation : *« Le téléchargement est effectué en dehors du bac à sable en tant
+> que root… »*. C'est une note sans conséquence : `apt` ne peut pas lire le fichier sous
+> son utilisateur `_apt` et le copie en tant que root. Pour l'éviter, installez depuis
+> `/tmp`.
+
 ### Installation utilisateur, sans paquet
 
 ```bash
@@ -155,8 +161,11 @@ Cette variante ne touche qu'à votre dossier personnel (`~/.local/bin`,
 `~/.local/share/applications`, `~/.local/share/icons`). Aucun `sudo`, aucun paquet
 Python à installer.
 
-Pour désinstaller : supprimer ces trois fichiers, plus `~/.config/multiwall` et
-`~/.local/share/multiwall`.
+Pour désinstaller : `./uninstall.sh`. Il retire le lanceur, l'entrée de menu et
+l'icône, **et rafraîchit le cache d'icônes** — indispensable, sans quoi le cache
+continue de désigner une icône disparue et l'application n'en affiche plus aucune, pas
+même après installation du paquet. Votre configuration et vos fonds sont conservés ; le
+script rappelle comment les effacer.
 
 ## Interface graphique
 
