@@ -97,6 +97,20 @@ SHORTCUTS_XML = """
             <child>
               <object class="GtkShortcutsShortcut">
                 <property name="visible">1</property>
+                <property name="accelerator">&lt;Primary&gt;l</property>
+                <property name="title">Ouvrir la bibliothèque</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="visible">1</property>
+                <property name="accelerator">&lt;Primary&gt;p</property>
+                <property name="title">Bibliothèque, onglet « Photos en ligne »</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="visible">1</property>
                 <property name="accelerator">&lt;Primary&gt;e</property>
                 <property name="title">Exporter le composite</property>
               </object>
@@ -137,7 +151,7 @@ SHORTCUTS_XML = """
             <child>
               <object class="GtkShortcutsShortcut">
                 <property name="visible">1</property>
-                <property name="accelerator">&lt;Primary&gt;Return</property>
+                <property name="accelerator">&lt;Primary&gt;Return &lt;Primary&gt;s</property>
                 <property name="title">Appliquer le fond d'écran</property>
               </object>
             </child>
@@ -153,6 +167,27 @@ SHORTCUTS_XML = """
                 <property name="visible">1</property>
                 <property name="accelerator">F5</property>
                 <property name="title">Redétecter les écrans</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="visible">1</property>
+                <property name="accelerator">&lt;Primary&gt;d</property>
+                <property name="title">Vérifier la compatibilité</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="visible">1</property>
+                <property name="accelerator">F1</property>
+                <property name="title">Guide d'utilisation</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="visible">1</property>
+                <property name="accelerator">&lt;Primary&gt;question</property>
+                <property name="title">Cette fenêtre</property>
               </object>
             </child>
             <child>

@@ -749,6 +749,7 @@ clavier, un script ou une tâche planifiée.
 <tt>multiwall random ~/Images</tt>        tire au sort dans un dossier
 <tt>multiwall apply</tt>                  réapplique la dernière configuration
 <tt>multiwall export fond.png</tt>        enregistre le composite
+<tt>multiwall doctor</tt>                 vérifie la compatibilité du système
 
 Options utiles : <tt>--fit</tt> (cover, contain, blur, stretch, center, tile), \
 <tt>--background '#101010'</tt>, et <tt>--span</tt> pour <tt>random</tt>.

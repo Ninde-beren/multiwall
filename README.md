@@ -169,13 +169,14 @@ L'aperçu reproduit la disposition réelle de vos écrans.
 | `Entrée` | Choisir l'image de l'écran sélectionné |
 | `Suppr` | Effacer l'image de l'écran |
 | `Ctrl+O` | Choisir une image |
-| `Ctrl+Entrée` | Appliquer |
+| `Ctrl+Entrée` ou `Ctrl+S` | Appliquer |
 | `Ctrl+1` / `Ctrl+2` | Mode par écran / panoramique |
 | `Ctrl+L` | Bibliothèque |
 | `Ctrl+P` | Bibliothèque, onglet « Photos en ligne » |
 | `Ctrl+R` | Nouveau tirage aléatoire |
 | `Ctrl+E` | Exporter le composite |
 | `F1` | Guide d'utilisation |
+| `Ctrl+?` | Fenêtre des raccourcis |
 | `Ctrl+D` | Vérifier la compatibilité |
 | `F5` | Redétecter les écrans |
 

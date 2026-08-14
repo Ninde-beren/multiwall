@@ -115,8 +115,10 @@ Réapplique la dernière configuration enregistrée.
 .B export \fIFICHIER\fR
 Enregistre l'image composée sans l'appliquer.
 .TP
-.B doctor \fR[\fB--mire\fR]
+.B doctor \fR[\fB--gui\fR] [\fB--mire\fR]
 Vérifie que l'environnement de bureau est supporté. Renvoie 0 si oui.
+\fB--gui\fR affiche le résultat dans une fenêtre ; \fB--mire\fR applique une mire
+de contrôle puis restaure le fond précédent.
 .SH OPTIONS
 .TP
 .BI --fit " MODE"
@@ -124,6 +126,12 @@ cover, contain, blur, stretch, center ou tile.
 .TP
 .BI --background " COULEUR"
 Couleur des zones vides, par exemple \fB#101010\fR.
+.TP
+.B --span
+Avec \fBrandom\fR, tire une seule image étalée sur tous les écrans.
+.TP
+.BI --nombre " N"
+Avec \fBphotos\fR, nombre de résultats à lister (12 par défaut).
 .SH FICHIERS
 .TP
 .I ~/.config/multiwall/config.json
