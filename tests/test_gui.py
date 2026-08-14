@@ -341,6 +341,57 @@ class TestFenetresSecondaires(BaseGUI):
             "la bibliothèque doit être juste après « Choisir une image »",
         )
 
+    def test_le_double_clic_applique_le_fond_genere(self):
+        from multiwall import windows
+
+        choisis = []
+        fenetre = windows.BibliothequeWindow(
+            self.win, self.win.monitors, choisis.append, lambda *_: None,
+            cfg=self.win.cfg, cible=windows.Cible(self.win.monitors),
+        )
+        try:
+            premier = fenetre.page_generes.flow.get_children()[0]
+            fenetre.page_generes.flow.emit("child-activated", premier)
+            self.assertEqual(choisis, [premier.fond_id],
+                             "activer une vignette doit valider le choix")
+        finally:
+            fenetre.destroy()
+
+    def test_le_double_clic_selectionne_avant_de_valider(self):
+        """L'activation peut venir du clavier, sans clic préalable."""
+        from multiwall import windows
+
+        choisis = []
+        fenetre = windows.BibliothequeWindow(
+            self.win, self.win.monitors, choisis.append, lambda *_: None,
+            cfg=self.win.cfg, cible=windows.Cible(self.win.monitors),
+        )
+        try:
+            troisieme = fenetre.page_generes.flow.get_children()[2]
+            self.assertIsNone(fenetre.page_generes.selection)
+            fenetre.page_generes.flow.emit("child-activated", troisieme)
+            self.assertEqual(choisis, [troisieme.fond_id])
+        finally:
+            fenetre.destroy()
+
+    def test_le_double_clic_sur_mes_fonds_applique_l_image(self):
+        from multiwall import windows
+
+        image = self.image_test("deja-vue.png", size=(1920, 1080))
+        self.win.cfg.noter_image(image)
+        appliquees = []
+        fenetre = windows.BibliothequeWindow(
+            self.win, self.win.monitors, lambda _: None, lambda *_: None,
+            onglet="mes-fonds", cfg=self.win.cfg, on_fichier=appliquees.append,
+            cible=windows.Cible(self.win.monitors),
+        )
+        try:
+            vignette = fenetre.page_mes_fonds.flow.get_children()[0]
+            fenetre.page_mes_fonds.flow.emit("child-activated", vignette)
+            self.assertEqual(appliquees, [str(image)])
+        finally:
+            fenetre.destroy()
+
     def test_un_fond_choisi_en_mode_par_ecran_ne_bascule_pas(self):
         """Choisir un fond ne doit pas changer de mode dans le dos de l'utilisateur."""
         self.win.selected = "DP-centre"

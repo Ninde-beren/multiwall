@@ -467,6 +467,11 @@ class BibliothequeWindow(Gtk.Window):
             self.stack.add_titled(self.page_mes_fonds, "mes-fonds", "Mes fonds")
         self.stack.connect("notify::visible-child", lambda *_: self._etat_change())
 
+        # Double-clic (ou Entrée) sur une vignette : équivaut au bouton.
+        for page in (self.page_generes, self.page_en_ligne, self.page_mes_fonds):
+            if page is not None:
+                page.flow.connect("child-activated", self._activer)
+
         entete = Gtk.HeaderBar(show_close_button=True)
         self.set_title(
             "Bibliothèque" if self.cible.ecran is None
@@ -496,6 +501,15 @@ class BibliothequeWindow(Gtk.Window):
     @property
     def page(self):
         return self.stack.get_visible_child()
+
+    def _activer(self, flow, enfant) -> None:
+        """Une vignette a été activée : on la sélectionne puis on valide.
+
+        La sélection suit normalement le clic, mais l'activation peut aussi
+        venir du clavier sur une vignette qui n'était pas encore choisie.
+        """
+        flow.select_child(enfant)
+        self._valider(None)
 
     def _etat_change(self) -> None:
         page = self.page
@@ -752,6 +766,9 @@ déforme · <b>Taille réelle</b> centre sans redimensionner · <b>Mosaïque</b>
 Elle propose des fonds <b>au format de ce que vous habillez</b> : la résolution \
 du bureau entier en mode panoramique, celle de l'écran sélectionné en mode \
 « une image par écran » — et l'appliquer ne change jamais de mode.
+
+<b>Double-cliquez</b> sur une vignette pour l'appliquer directement, ou \
+sélectionnez-la puis utilisez le bouton.
 
 Un seul bouton, trois onglets :
 
